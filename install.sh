@@ -11,12 +11,23 @@ else
     echo "Unsupported architecture!"
 fi
 
+if [ -z "$SERVER_ADDR" ]; then
+    echo "Error: SERVER_ADDR variable is not set."
+    echo "Run the install like this:"
+    echo "    SERVER_ADDR=127.0.0.1:8008 ./install.sh"
+    exit 1
+fi
+
 echo "Fetching binary..."
 wget https://github.com/lbecher/my-box-ip-client/releases/download/$VERSION/my-box-ip-client-$ARCH -O my-box-ip-client
 
 echo "Copying binary..."
 sudo cp my-box-ip-client /usr/local/bin/my-box-ip-client
 sudo chmod +x /usr/local/bin/my-box-ip-client
+
+echo "Creating env file..."
+ENV_FILE="/etc/my-box-ip-client.env"
+echo "SERVER_ADDR=$SERVER_ADDR" | sudo tee "$ENV_FILE" > /dev/null
 
 echo "Creating service..."
 SERVICE_FILE="/etc/systemd/system/my-box-ip-client.service"
@@ -26,7 +37,7 @@ Description=My Box IP Client
 
 [Service]
 Type=oneshot
-Environment=SERVER_ADDR=\${SERVER_ADDR}
+EnvironmentFile=/etc/my-box-ip-client.env
 ExecStart=/usr/local/bin/my-box-ip-client
 EOF
 
